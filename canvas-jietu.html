@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>canvas - 截图</title>
+    <style>
+        *{
+            margin: 0;
+            padding: 0;
+        }
+        html,body{
+            height: 100%;
+            width: 100%;
+        }
+        .box{
+            margin: 100px;
+        }
+        #canvas{
+            border: 1px solid #ccc;
+        }
+        .select{
+            display: flex;
+        }
+        label, .download{
+            display: inline-block;
+            border: 1px solid #ccc;
+            padding: 10px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            outline: none;
+            background: white;
+            cursor: pointer;
+        }
+        label:hover{
+            background: #e2e2e2;
+            color: rgb(63, 175, 219);
+        }
+        .download:hover{
+            background: #e2e2e2;
+            color: rgb(63, 175, 219);
+        }
+        input[type='file']{
+            display: none;
+        }
+        .download{
+            display: none;
+        }
+        [v-cloak]{
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="box">
+        <canvas ref='canvas' class="canvas" width="0" height="0"></canvas>
+        <div class="select">
+            <label for="ci">选择图片</label>
+            <input id="ci" type="file" @change='getImage'>
+            <button @click='downLoad' class="download">保存图片</button>
+        </div>
+        
+    </div>
+    <script src="./js/vue.js"></script>
+    <script>
+        let  image = new Image(),
+             width = 0,
+             height = 0,
+             imgURL = '';
+        let canvas,ctx,newImage;
+        let clone = [];
+
+        let vm = new Vue({
+            el:'.box',
+            data:{
+                rotates: 0,
+                ctx: '',
+                arr:[123,345,657,3],
+                clickNum: 0
+            },
+            mounted(){
+                
+            },
+            methods:{
+                //显示图片
+                getImage(){
+                    var _this = this;
+                    var file = event.target.files;
+                    if(file.length >0){
+                        var URL = window.URL || window.webkitURL;
+                        imgURL = URL.createObjectURL(file[0]);
+                        image.src = imgURL;
+                        image.onload = function(){
+                            height = this.height;
+                            width = this.width;
+                            
+                            _this.$refs.canvas.height = height;
+                            _this.$refs.canvas.width = width;
+                            canvas = document.querySelector('.canvas');
+                            ctx = canvas.getContext('2d');
+                            ctx.beginPath();
+                            ctx.drawImage(this,0, 0,width,height)
+                            _this.listerner();
+                        }
+                    }
+                },
+
+                //启动监控 - 点击事件 - 是否选择截图区间
+                listerner(){
+                    var _this = this;
+                    document.querySelector('body').addEventListener('click',function(event){
+                        if(event.path[0].className.indexOf('canvas') != -1){
+                            _this.clickNum = _this.clickNum + 1;
+                            if(_this.clickNum == 1){
+                                clone.push({x:event.layerX,y:event.layerY});
+                            }else if(_this.clickNum == 2){
+                                clone.push({xx:event.layerX,yy:event.layerY})
+                                if(clone[0].x == clone[1].xx || clone[0].y == clone[1].yy){
+                                    clone = [];
+                                }else{
+                                    _this.drawRect();
+                                }
+                            }
+                            
+                        }else if(_this.clickNum == 1){
+                            clone = [];
+                            _this.clickNum = 0;
+                        }
+                    })
+                },
+
+                //绘制截图矩阵
+                drawRect(){
+                    // console.log(clone)
+                    if(clone[0].x > clone[1].xx){
+                        if(clone[0].y < clone[1].yy){
+                            //第一点为右上角
+                            var result = confirm('是否截图');
+                            if(result){
+                                ctx.beginPath();
+                                ctx.strokeStyle = 'red';
+                                ctx.strokeRect(clone[1].xx,clone[0].y,(clone[0].x - clone[1].xx),(clone[1].yy - clone[0].y));
+                                
+                            
+                                //截图
+                                ctx.clearRect(0,0,width,height);
+                                this.$refs.canvas.height = clone[1].yy - clone[0].y;
+                                this.$refs.canvas.width = clone[0].x - clone[1].xx;
+                                ctx.drawImage(image,clone[1].xx,clone[0].y,(clone[0].x - clone[1].xx),(clone[1].yy - clone[0].y))
+                                
+                                //canvas转base64
+                                newImage = canvas.toDataURL('image/png');
+                                // this.downLoad(newImage);
+                                document.querySelector('.download').style.display = 'block';
+                            }else{
+                                clone = [];
+                                this.clickNum = 0;
+                            }
+                            
+                        }else{
+                            //第一点为右下角
+                            var result = confirm('是否截图');
+                            if(result){
+                                ctx.beginPath();
+                                ctx.strokeStyle = 'red';
+                                ctx.strokeRect(clone[1].xx,clone[1].yy,(clone[0].x - clone[1].xx),(clone[0].y - clone[1].yy));
+                                
+                            
+                                //截图
+                                ctx.clearRect(0,0,width,height);
+                                this.$refs.canvas.height = clone[1].yy - clone[0].y;
+                                this.$refs.canvas.width = clone[0].x - clone[1].xx;
+                                ctx.drawImage(image,clone[1].xx,clone[1].yy,(clone[0].x - clone[1].xx),(clone[0].y - clone[1].yy))
+                                
+                                //canvas转base64
+                                newImage = canvas.toDataURL('image/png');
+                                // this.downLoad(newImage);
+                                document.querySelector('.download').style.display = 'block';
+                            }else{
+                                clone = [];
+                                this.clickNum = 0;
+                            }
+                        }
+                    }else{
+                        if(clone[0].y < clone[1].yy){
+                            //第一点为左上角
+                            //绘制截图框
+                            //提示
+                            var result = confirm('是否截图');
+                            if(result){
+                                ctx.beginPath();
+                                ctx.strokeStyle = 'red';
+                                //ctx.strokeRect(clone[1].xx,clone[1].yy,(clone[0].x - clone[1].xx),(clone[0].y - clone[1].yy));
+                                ctx.strokeRect(clone[0].x,clone[0].y,(clone[1].xx - clone[0].x),(clone[1].yy - clone[0].y));
+                                
+                            
+                                //截图
+                                ctx.clearRect(0,0,width,height);
+                                this.$refs.canvas.height = clone[1].yy - clone[0].y;
+                                this.$refs.canvas.width = clone[1].xx - clone[0].x;
+                                ctx.drawImage(image,clone[0].x,clone[0].y,(clone[1].xx - clone[0].x),(clone[1].yy - clone[0].y),0,0,(clone[1].xx - clone[0].x),(clone[1].yy - clone[0].y))
+                            
+                                newImage = canvas.toDataURL('image/png');
+                                // this.downLoad(newImage);
+                                document.querySelector('.download').style.display = 'block';
+                            }else{
+                                clone = [];
+                                this.clickNum = 0;
+                            }
+                            
+                        }else{
+                            //第一点为左下角
+                            var result = confirm('是否截图');
+                            if(result){
+                                ctx.beginPath();
+                                ctx.strokeStyle = 'red';
+                                ctx.strokeRect(clone[0].x,clone[1].yy,(clone[1].xx - clone[0].x),(clone[0].y - clone[1].yy));
+                                
+                            
+                                //截图
+                                ctx.clearRect(0,0,width,height);
+                                this.$refs.canvas.height = clone[0].y - clone[1].yy;
+                                this.$refs.canvas.width = clone[1].xx - clone[0].x;
+                                ctx.drawImage(image,clone[0].x,clone[1].yy,(clone[1].xx - clone[0].x),(clone[0].y - clone[1].yy))
+                            
+                                newImage = canvas.toDataURL('image/png');
+                                // this.downLoad(newImage);
+                                document.querySelector('.download').style.display = 'block';
+                            }else{
+                                clone = [];
+                                this.clickNum = 0;
+                            }
+                        }
+                    }
+                },
+
+                //保存图片
+                downLoad(){
+                    var da = document.createElement('a');
+                    var date = new Date();
+                    var imageName = prompt('存储图片名称？',date.getTime());
+                    if(imageName == null){
+                        da.download = date.getTime();
+                    }else{
+                        da.download = imageName;
+                    }
+                    da.href = newImage;
+                    document.body.appendChild(da);
+                    da.click();
+                    da.remove();
+                    document.querySelector('.download').style.display = 'none';
+                }
+            },
+        })
+        
+        
+    </script>
+</body>
+</html>
