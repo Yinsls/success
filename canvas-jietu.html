@@ -14,19 +14,21 @@
             height: 100%;
             width: 100%;
         }
-        .box{
-            margin: 100px;
+        .box>p{
+            margin-left: 40px;
         }
-        #canvas{
+        .canvas{
             border: 1px solid #ccc;
+            margin: 10px;
         }
         .select{
             display: flex;
         }
-        label, .download{
+        label, .download, .revoke{
             display: inline-block;
             border: 1px solid #ccc;
             padding: 10px 15px;
+            margin-right: 10px;
             border-radius: 20px;
             font-size: 14px;
             outline: none;
@@ -41,24 +43,34 @@
             background: #e2e2e2;
             color: rgb(63, 175, 219);
         }
+        .revoke:hover{
+            background: #e2e2e2;
+            color: rgb(63, 175, 219);
+        }
         input[type='file']{
             display: none;
         }
         .download{
             display: none;
         }
-        [v-cloak]{
+        .revoke{
             display: none;
+            padding: 10px 30px;
         }
     </style>
 </head>
 <body>
     <div class="box">
+            提示:<p>选择图片后，在图片区域内连续点击两次以确定截图区域，截图选择成功后会出现区域框提示，<br/>
+            撤销：撤销截图
+            保存图片：下载截图图片
+        </p>
         <canvas ref='canvas' class="canvas" width="0" height="0"></canvas>
         <div class="select">
             <label for="ci">选择图片</label>
             <input id="ci" type="file" @change='getImage'>
             <button @click='downLoad' class="download">保存图片</button>
+            <button @click='revoke' class="revoke">撤销</button>
         </div>
         
     </div>
@@ -67,16 +79,17 @@
         let  image = new Image(),
              width = 0,
              height = 0,
+             imageType = 'image/png',
+             firstChange = true,
+             rectColor = 'red',
              imgURL = '';
-        let canvas,ctx,newImage;
+        //newImage:截图图片base64字符 oldImage:选择截图前的图片（最开始选择的图片） cutImage:截图区域内容
+        let canvas,ctx,newImage,oldImage,cutImage;   
         let clone = [];
 
         let vm = new Vue({
             el:'.box',
             data:{
-                rotates: 0,
-                ctx: '',
-                arr:[123,345,657,3],
                 clickNum: 0
             },
             mounted(){
@@ -87,6 +100,7 @@
                 getImage(){
                     var _this = this;
                     var file = event.target.files;
+                    _this.clickNum = 0;
                     if(file.length >0){
                         var URL = window.URL || window.webkitURL;
                         imgURL = URL.createObjectURL(file[0]);
@@ -97,11 +111,19 @@
                             
                             _this.$refs.canvas.height = height;
                             _this.$refs.canvas.width = width;
+
                             canvas = document.querySelector('.canvas');
                             ctx = canvas.getContext('2d');
                             ctx.beginPath();
-                            ctx.drawImage(this,0, 0,width,height)
-                            _this.listerner();
+                            ctx.drawImage(this,0, 0,width,height);
+                            //记录此canvas内容
+                            oldImage = ctx.getImageData(0,0,width,height);
+                            if(firstChange){
+                                //图片显示后，监控截图
+                                _this.listerner();  
+                            }
+                            
+                            firstChange = false;
                         }
                     }
                 },
@@ -136,103 +158,99 @@
                     if(clone[0].x > clone[1].xx){
                         if(clone[0].y < clone[1].yy){
                             //第一点为右上角
-                            var result = confirm('是否截图');
-                            if(result){
-                                ctx.beginPath();
-                                ctx.strokeStyle = 'red';
-                                ctx.strokeRect(clone[1].xx,clone[0].y,(clone[0].x - clone[1].xx),(clone[1].yy - clone[0].y));
-                                
+                            //绘制截图框
+                            ctx.beginPath();
+                            ctx.strokeStyle = rectColor;
+                            //截图宽度
+                            var w = clone[0].x - clone[1].xx;
+                            //截图高度
+                            var h = clone[1].yy - clone[0].y;
+                            //获取截图区域内容
+                            cutImage = ctx.getImageData(clone[1].xx,clone[0].y,w,h);
+                            //绘制截图框
+                            ctx.strokeRect(clone[1].xx,clone[0].y,w,h);
+                            //将截图内容转化base64
+                            newImage = this.createNewCanvas(cutImage,w,h);
                             
-                                //截图
-                                ctx.clearRect(0,0,width,height);
-                                this.$refs.canvas.height = clone[1].yy - clone[0].y;
-                                this.$refs.canvas.width = clone[0].x - clone[1].xx;
-                                ctx.drawImage(image,clone[1].xx,clone[0].y,(clone[0].x - clone[1].xx),(clone[1].yy - clone[0].y))
-                                
-                                //canvas转base64
-                                newImage = canvas.toDataURL('image/png');
-                                // this.downLoad(newImage);
-                                document.querySelector('.download').style.display = 'block';
-                            }else{
-                                clone = [];
-                                this.clickNum = 0;
-                            }
+
+                            //显示保存图片、撤回按钮
+                            document.querySelector('.download').style.display = 'block';
+                            document.querySelector('.revoke').style.display = 'block';
                             
                         }else{
                             //第一点为右下角
-                            var result = confirm('是否截图');
-                            if(result){
-                                ctx.beginPath();
-                                ctx.strokeStyle = 'red';
-                                ctx.strokeRect(clone[1].xx,clone[1].yy,(clone[0].x - clone[1].xx),(clone[0].y - clone[1].yy));
-                                
+                            //绘制截图框
+                            ctx.beginPath();
+                            ctx.strokeStyle = rectColor;
+                            //截图宽度
+                            var w = clone[0].x - clone[1].xx;
+                            //截图高度
+                            var h = clone[0].y - clone[1].yy;
+                            //获取截图区域内容
+                            cutImage = ctx.getImageData(clone[1].xx,clone[1].yy,w,h);
+                            //绘制截图框
+                            ctx.strokeRect(clone[1].xx,clone[1].yy,w,h);
+                            //将截图内容转化base64
+                            newImage = this.createNewCanvas(cutImage,w,h);
                             
-                                //截图
-                                ctx.clearRect(0,0,width,height);
-                                this.$refs.canvas.height = clone[1].yy - clone[0].y;
-                                this.$refs.canvas.width = clone[0].x - clone[1].xx;
-                                ctx.drawImage(image,clone[1].xx,clone[1].yy,(clone[0].x - clone[1].xx),(clone[0].y - clone[1].yy))
-                                
-                                //canvas转base64
-                                newImage = canvas.toDataURL('image/png');
-                                // this.downLoad(newImage);
-                                document.querySelector('.download').style.display = 'block';
-                            }else{
-                                clone = [];
-                                this.clickNum = 0;
-                            }
+
+                            //显示保存图片、撤回按钮
+                            document.querySelector('.download').style.display = 'block';
+                            document.querySelector('.revoke').style.display = 'block';
                         }
                     }else{
                         if(clone[0].y < clone[1].yy){
                             //第一点为左上角
                             //绘制截图框
-                            //提示
-                            var result = confirm('是否截图');
-                            if(result){
-                                ctx.beginPath();
-                                ctx.strokeStyle = 'red';
-                                //ctx.strokeRect(clone[1].xx,clone[1].yy,(clone[0].x - clone[1].xx),(clone[0].y - clone[1].yy));
-                                ctx.strokeRect(clone[0].x,clone[0].y,(clone[1].xx - clone[0].x),(clone[1].yy - clone[0].y));
-                                
+                            ctx.beginPath();
+                            ctx.strokeStyle = rectColor;
+                            //截图宽度
+                            var w = clone[1].xx - clone[0].x;
+                            //截图高度
+                            var h = clone[1].yy - clone[0].y;
+                            //获取截图区域内容
+                            cutImage = ctx.getImageData(clone[0].x,clone[0].y,w,h);
+                            //绘制截图框
+                            ctx.strokeRect(clone[0].x,clone[0].y,w,h);
+                            //将截图内容转化base64
+                            newImage = this.createNewCanvas(cutImage,w,h);
                             
-                                //截图
-                                ctx.clearRect(0,0,width,height);
-                                this.$refs.canvas.height = clone[1].yy - clone[0].y;
-                                this.$refs.canvas.width = clone[1].xx - clone[0].x;
-                                ctx.drawImage(image,clone[0].x,clone[0].y,(clone[1].xx - clone[0].x),(clone[1].yy - clone[0].y),0,0,(clone[1].xx - clone[0].x),(clone[1].yy - clone[0].y))
-                            
-                                newImage = canvas.toDataURL('image/png');
-                                // this.downLoad(newImage);
-                                document.querySelector('.download').style.display = 'block';
-                            }else{
-                                clone = [];
-                                this.clickNum = 0;
-                            }
+
+                            //显示保存图片、撤回按钮
+                            document.querySelector('.download').style.display = 'block';
+                            document.querySelector('.revoke').style.display = 'block';
                             
                         }else{
                             //第一点为左下角
-                            var result = confirm('是否截图');
-                            if(result){
-                                ctx.beginPath();
-                                ctx.strokeStyle = 'red';
-                                ctx.strokeRect(clone[0].x,clone[1].yy,(clone[1].xx - clone[0].x),(clone[0].y - clone[1].yy));
-                                
+                            //绘制截图框
+                            ctx.beginPath();
+                            ctx.strokeStyle = rectColor;
+                            //截图宽度
+                            var w = clone[1].xx - clone[0].x;
+                            //截图高度
+                            var h = clone[0].y - clone[1].yy;
+                            //获取截图区域内容
+                            cutImage = ctx.getImageData(clone[0].x,clone[1].yy,w,h);
+                            //绘制截图框
+                            ctx.strokeRect(clone[0].x,clone[1].yy,w,h);
+                            //将截图内容转化base64
+                            newImage = this.createNewCanvas(cutImage,w,h);
                             
-                                //截图
-                                ctx.clearRect(0,0,width,height);
-                                this.$refs.canvas.height = clone[0].y - clone[1].yy;
-                                this.$refs.canvas.width = clone[1].xx - clone[0].x;
-                                ctx.drawImage(image,clone[0].x,clone[1].yy,(clone[1].xx - clone[0].x),(clone[0].y - clone[1].yy))
+
+                            //显示保存图片、撤回按钮
+                            document.querySelector('.download').style.display = 'block';
+                            document.querySelector('.revoke').style.display = 'block';
                             
-                                newImage = canvas.toDataURL('image/png');
-                                // this.downLoad(newImage);
-                                document.querySelector('.download').style.display = 'block';
-                            }else{
-                                clone = [];
-                                this.clickNum = 0;
-                            }
                         }
                     }
+                },
+
+                //撤销截图
+                revoke(){
+                    ctx.putImageData(oldImage,0,0);
+                    clone = [];
+                    this.clickNum = 0;
+                    document.querySelector('.download').style.display = 'none';
                 },
 
                 //保存图片
@@ -240,16 +258,27 @@
                     var da = document.createElement('a');
                     var date = new Date();
                     var imageName = prompt('存储图片名称？',date.getTime());
-                    if(imageName == null){
-                        da.download = date.getTime();
-                    }else{
+                    if(imageName != null){
                         da.download = imageName;
+                        da.href = newImage;
+                        document.body.appendChild(da);
+                        da.click();
+                        da.remove();
+                        document.querySelector('.download').style.display = 'none';
                     }
-                    da.href = newImage;
-                    document.body.appendChild(da);
-                    da.click();
-                    da.remove();
-                    document.querySelector('.download').style.display = 'none';
+                    
+                },
+
+                //创建新的空白canvas画布
+                createNewCanvas(content,width,height){
+                    var nCanvas = document.createElement('canvas');
+                    var nCtx = nCanvas.getContext('2d');
+                    nCanvas.width = width;
+                    nCanvas.height = height;
+                    nCtx.putImageData(content,0,0);
+                    //显示截图
+                    // document.querySelector('body').append(nCanvas); 
+                    return nCanvas.toDataURL(imageType);
                 }
             },
         })
