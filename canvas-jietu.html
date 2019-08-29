@@ -107,15 +107,18 @@
                         imgURL = URL.createObjectURL(file[0]);
                         image.src = imgURL;
                         image.onload = function(){
+                            //获取图片宽高
                             height = this.height;
                             width = this.width;
                             
+                            //设置canvas大小
                             _this.$refs.canvas.height = height;
                             _this.$refs.canvas.width = width;
 
                             canvas = document.querySelector('.canvas');
                             ctx = canvas.getContext('2d');
                             ctx.beginPath();
+                            //绘制图片
                             ctx.drawImage(this,0, 0,width,height);
                             //记录此canvas内容
                             oldImage = ctx.getImageData(0,0,width,height);
@@ -155,7 +158,7 @@
 
                 //绘制截图矩阵
                 drawRect(){
-                    // console.log(clone)
+                    //选择截图区域
                     if(clone[0].x > clone[1].xx){
                         if(clone[0].y < clone[1].yy){
                             //第一点为右上角
@@ -270,7 +273,7 @@
                     
                 },
 
-                //创建新的空白canvas画布
+                //创建新的空白canvas画布并将截图渲染
                 createNewCanvas(content,width,height){
                     var nCanvas = document.createElement('canvas');
                     var nCtx = nCanvas.getContext('2d');

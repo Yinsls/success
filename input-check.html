@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>自定义单选、多选</title>
+    <link rel="stylesheet" href="https://at.alicdn.com/t/font_1290583_z3yoebfjni.css">
+    <style>
+        .check-checkbox {
+            cursor: pointer;
+            user-select: none;
+        }
+        .check-checkbox .icon-checked {
+            background: white;
+            z-index: 100;
+            border: 1px solid #ccc;
+            border-radius: 50%;
+            height: 15px;
+            width: 15px;
+            line-height: 16px;
+            display: inline-block;
+            text-align: center;
+            vertical-align: middle;
+        }
+        .check-checkbox .icon-checked:before {
+            color: white;
+        }
+        .check-checkbox input[checked=checked]+.icon-checked {
+            border: 1px solid transparent;
+            background: #319bff;
+        }
+        .check-checkbox input[checked=checked]+.icon-checked:before {
+            color: #fff;
+            font-size: 10px;
+            vertical-align: top;
+        }
+
+
+
+        /* 单选 */
+        .check-radio {
+            cursor: pointer;
+            user-select: none;
+        }
+        .check-radio .icon-radio-weixuanzhong, .check-radio .icon-radio-checked{
+            vertical-align: middle;
+            font-size: 18px;
+        }
+        .check-radio .icon-radio-weixuanzhong {
+            color: #cccccc;
+        }
+        .check-radio .icon-radio-checked {
+            color: #319bff;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="box">
+        <div class="checkBox">
+            <h1>多选</h1>
+            <div class="input">
+                <input type="checkbox" checked='checked'>
+                <label class="check-checkbox">
+                    <input type="checkbox" style="display: none;">
+                    <i class="iconfont icon-checked"></i>
+                    <span style="font-size: 12px;">选择</span>
+                </label>
+                <label class="check-checkbox">
+                    <input type="checkbox" style="display: none;">
+                    <i class="iconfont icon-checked"></i>
+                    <span style="font-size: 12px;">选择</span>
+                </label>
+                <label class="check-checkbox">
+                    <input type="checkbox" style="display: none;">
+                    <i class="iconfont icon-checked"></i>
+                    <span style="font-size: 12px;">选择</span>
+                </label>
+            </div>
+        </div>
+        <div class="radio">
+            <h1>单选</h1>
+            <div class="input">
+                <input type="radio" checked="checked" name="radio">
+                <input type="radio" name="radio">
+
+                <div class="group-radio">
+                    <label class="check-radio">
+                        <input type="radio" name="aa" checked="checked" style="display: none;">
+                        <i class="iconfont icon-radio-weixuanzhong"></i>
+                        <span style="font-size: 12px;">选择</span>
+                    </label>
+                    <label class="check-radio">
+                        <input type="radio" name="aa" style="display: none;">
+                        <i class="iconfont icon-radio-weixuanzhong"></i>
+                        <span style="font-size: 12px;">选择</span>
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        // 多选
+        (function checkBox() {
+            var checkBox = document.querySelectorAll(' .check-checkbox');
+            for (var i = 0; i < checkBox.length; i++) {
+                var checkBoxInput = checkBox[i].querySelectorAll('input[type=checkbox]');
+                for (var j = 0; j < checkBoxInput.length; j++) {
+                    checkBoxInput[j].addEventListener('click', function () {
+                        if (this.checked) {
+                            this.setAttribute('checked', 'checked');
+                        } else {
+                            this.setAttribute('checked', 'false');
+                        }
+                    })
+                }
+            }
+        })();
+
+        // 单选 
+        //name: input name值    dom: 单选按钮组父元素，默认为全局body
+        function checkRadio(name, dom) {
+            dom = dom || 'body';
+            var checkRadio = document.querySelectorAll(`${dom} input[type=radio][name=${name}]`);
+            for(var i=0;i<checkRadio.length;i++){
+                if(checkRadio[i].checked){
+                    checkRadio[i].nextElementSibling.className = "iconfont icon-radio-checked";
+                }else{
+                    checkRadio[i].nextElementSibling.className = "iconfont icon-radio-weixuanzhong";
+                }
+                checkRadio[i].addEventListener('click',function(){
+                    window.checkRadio(name, dom)
+                })
+            }
+
+        }
+        checkRadio('aa', '.group-radio');
+
+    </script>
+</body>
+
+</html>

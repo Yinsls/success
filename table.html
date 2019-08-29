@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>table - 固定表头</title>
+    <link rel="stylesheet" href="./css/jquery.mCustomScrollbar.min.css">
+    <style>
+        .div-table{
+            border-radius: 6px;
+            overflow: hidden;
+            box-shadow: 0 0 10px 2px #cccccc;
+        }
+        .div-table table {
+            text-align: left;
+            table-layout: fixed;
+            width: 100%;
+            border-collapse: collapse;
+            border-spacing: 0;
+        }
+
+        .div-table tbody td,
+        .div-table thead th {
+            padding: 8px;
+            word-wrap: break-word;
+            word-break: break-all;
+        }
+
+        .div-table thead tr{
+            background: rgb(245, 245, 245);
+        }
+        .div-table tbody tr:nth-child(even){
+            background: rgb(251, 251, 251);
+        }
+        .div-table tbody tr:hover{
+            background: rgb(240, 240, 240);
+        }
+
+        .mCSB_horizontal.mCSB_inside>.mCSB_container{
+            top: 0 !important;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="box">
+        <div class="div-table">
+            <div class="table-header">
+                <table>
+                    <colgroup>
+                        <col style="width: 200px;" />
+                        <col style="width: 200px;" />
+                        <col style="width: 200px;" />
+                        <col style="width: 200px;" />
+                    </colgroup>
+                    <thead>
+                        <tr>
+                            <th>姓名</th>
+                            <th>年龄</th>
+                            <th>地址</th>
+                            <th>编号</th>
+                        </tr>
+                    </thead>
+                </table>
+            </div>
+            <div class="table-body">
+                <table>
+                    <colgroup>
+                        <col style="width: 200px;" />
+                        <col style="width: 200px;" />
+                        <col style="width: 200px;" />
+                        <col style="width: 200px;" />
+                    </colgroup>
+                    <tbody>
+                        <tr>
+                            <td>张三</td>
+                            <td>132</td>
+                            <td>杭州市西湖区三墩</td>
+                            <td>1234sdf</td>
+                        </tr>
+                        <tr>
+                            <td>张三</td>
+                            <td>132</td>
+                            <td>杭州市西湖区三墩</td>
+                            <td>1234sdf</td>
+                        </tr>
+                        <tr>
+                            <td>张三</td>
+                            <td>132</td>
+                            <td>杭州市西湖区三墩</td>
+                            <td>1234sdf</td>
+                        </tr>
+                        <tr>
+                            <td>张三</td>
+                            <td>132</td>
+                            <td>杭州市西湖区三墩</td>
+                            <td>1234sdf</td>
+                        </tr>
+                        <tr>
+                            <td>张三</td>
+                            <td>132</td>
+                            <td>杭州市西湖区三墩</td>
+                            <td>1234sdf</td>
+                        </tr>
+                        <tr>
+                            <td>张三</td>
+                            <td>132</td>
+                            <td>杭州市西湖区三墩</td>
+                            <td>1234sdf</td>
+                        </tr>
+                        <tr>
+                            <td>张三</td>
+                            <td>132</td>
+                            <td>杭州市西湖区三墩</td>
+                            <td>1234sdf</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <script src="./js/jquery-1.9.1.min.js"></script>
+    <script src="./js/jquery.mCustomScrollbar.js"></script>
+    <script src="./js/jquery.mousewheel.min.js"></script>
+    <script>
+        function init(){
+            // 设置table内容区高度
+            $('.table-body').height(200);
+            
+            // 垂直滚动
+            $('.table-body').mCustomScrollbar({
+                axis: 'y'
+            })
+
+            // 水平滚动
+            $('.div-table').mCustomScrollbar({
+                axis: 'x'
+            })
+        }
+        
+        
+
+        // 自动平分单元格宽度 dom:依据的所需元素,注意：元素滚动可能会对自动分配单元格产生影响
+        function initTable(dom, val) {
+            var count = 0;
+            var length = 0;
+            if(dom == undefined){
+                return alert('未设置参考元素！');
+            }
+            if(val != undefined){
+                for(var i=0; i<val.length; i++){
+                    count += val[i].num;
+                    length++;
+                }
+            }
+            var tableHead = $('.table-header colgroup col');
+            var tableContent = $('.table-body colgroup col');
+            var tableWidth = (($(dom).width() - count) / (tableHead.length - length)).toFixed(1);
+            for (var i = 0; i < tableHead.length; i++) {
+                tableHead.eq(i).css('width', tableWidth + 'px');
+                tableContent.eq(i).css('width', tableWidth + 'px');
+            }
+        }
+
+        // 自定义单元格宽度 val所需参数 -- col:列数 num:宽度
+        // 当设置后的总单元格宽度小于table宽度时，会自动扩增单元格大小，此时设置的数值只作为大致趋势
+        function setTableTdWidth(val) {
+            var tableHead = $('.table-header colgroup col');
+            var tableContent = $('.table-body colgroup col');
+            var countWidth = tableHead.parents('table').width();
+            for (var i = 0; i < val.length; i++) {
+                countWidth -= val[i].num;
+            }
+            var tableWidth = countWidth / (tableHead.length - val.length).toFixed(1);
+            for (var i = 0; i < val.length; i++) {
+                tableHead.eq(val[i].col).css('width', val[i].num + 'px');
+                tableContent.eq(val[i].col).css('width', val[i].num + 'px');
+            }
+
+        }
+
+        var setTd = [
+            {col: 2, num: 300},
+            {col: 1, num: 150}
+        ]
+        init();
+        // initTable('.box', setTd);
+
+        // 如：将第三个单元格宽度设置为300，将第二个单元格宽度设置为150
+        setTableTdWidth(setTd)
+
+        $(window).resize(function(){
+            // initTable('.box', setTd);
+            setTableTdWidth(setTd)
+        })
+
+    </script>
+</body>
+
+</html>
