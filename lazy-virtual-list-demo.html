@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>图片懒加载虚拟列表</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { margin: 0; min-height: 100vh; font: 14px/1.5 system-ui, sans-serif; color: #182033; background: #f5f7fb; }
+        main { width: min(820px, calc(100% - 32px)); margin: 38px auto; }
+        h1 { margin-bottom: 8px; } p { color: #64748b; }
+        .controls { display: flex; gap: 12px; align-items: center; margin: 20px 0; }
+        select { padding: 7px 10px; border: 1px solid #cbd5e1; border-radius: 6px; background: white; }
+        #list { height: 500px; overflow: auto; border: 1px solid #dbe3f0; border-radius: 12px; background: white; box-shadow: 0 10px 28px #15244712; }
+        .lazy-virtual-list__content { position: relative; }
+        .lazy-virtual-list__item { display: flex; align-items: center; gap: 18px; padding: 12px 20px; border-bottom: 1px solid #edf1f7; background: white; }
+        .lazy-virtual-list__image { width: 136px; height: 86px; flex: 0 0 auto; object-fit: cover; border-radius: 8px; opacity: 0; background: #e6edf7; transition: opacity .25s; }
+        .lazy-virtual-list__image.is-loaded { opacity: 1; }
+        .lazy-virtual-list__text { font-size: 16px; font-weight: 650; }
+        .lazy-virtual-list__text small { display: block; margin-top: 4px; font-size: 13px; font-weight: 400; color: #64748b; }
+    </style>
+</head>
+<body>
+    <main>
+        <h1>图片懒加载 + 虚拟列表</h1>
+        <p>列表含 1,000 条记录，但页面仅渲染当前可见区域附近的行。图片进入滚动容器的可视边界后才设置 <code>src</code>。</p>
+        <div class="controls">
+            <label>提前加载距离
+                <select id="margin"><option value="0px 0px">0px</option><option value="100px 0px" selected>100px</option><option value="300px 0px">300px</option></select>
+            </label>
+            <span id="count"></span>
+        </div>
+        <div id="list" aria-label="图片列表"></div>
+    </main>
+    <script src="./js/lazy-virtual-list.js"></script>
+    <script>
+        function imageUrl(index) {
+            var hue = (index * 31) % 360;
+            var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="400" height="250"><rect width="100%" height="100%" fill="hsl(' + hue + ',65%,52%)"/><text x="50%" y="52%" text-anchor="middle" font-family="Arial" font-size="42" fill="white">图片 ' + (index + 1) + '</text></svg>';
+            return 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svg);
+        }
+        var items = Array.from({ length: 1000 }, function (_, index) {
+            return { title: '虚拟列表项目 #' + (index + 1), alt: '演示图片 ' + (index + 1), image: imageUrl(index) };
+        });
+        var list;
+        function createList() {
+            if (list) list.destroy();
+            list = new LazyVirtualList({
+                container: document.getElementById('list'), items: items, itemHeight: 111,
+                overscan: 4, rootMargin: document.getElementById('margin').value,
+                renderItem: function (item) {
+                    var row = document.createElement('article');
+                    var image = document.createElement('img');
+                    image.className = 'lazy-virtual-list__image'; image.alt = item.alt; image.dataset.src = item.image;
+                    var text = document.createElement('div'); text.className = 'lazy-virtual-list__text';
+                    text.innerHTML = item.title + '<small>滚动至可视区域（或提前加载边界）后加载图片</small>';
+                    row.append(image, text); return row;
+                }
+            });
+            document.getElementById('count').textContent = '可视区域边界：' + document.getElementById('margin').value;
+        }
+        document.getElementById('margin').addEventListener('change', createList);
+        createList();
+    </script>
+</body>
+</html>

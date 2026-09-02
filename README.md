@@ -33,3 +33,20 @@ table - 固定表头、自定义单元格宽度 - table.html
 > **愿** - 永远没有bug
 
 > 不介意的话，给个 **小星星** ~~
+
+### 图片懒加载虚拟列表
+---
+`lazy-virtual-list-demo.html` 展示固定行高虚拟列表与图片懒加载的组合。组件位于 `js/lazy-virtual-list.js`：只渲染视口附近的列表项，并使用 `IntersectionObserver` 在图片进入滚动容器可视区域（可通过 `rootMargin` 配置，例如 `100px 0px`）时才赋值图片 `src`。
+
+```javascript
+var list = new LazyVirtualList({
+    container: document.getElementById('list'),
+    items: [{ title: '标题', image: 'https://example.com/photo.jpg', alt: '说明' }],
+    itemHeight: 111,     // 固定行高，虚拟定位的计算依据
+    overscan: 4,         // 视口上下额外渲染的行数
+    rootMargin: '100px 0px' // 提前进入该边界即加载图片
+});
+
+// 不再使用时释放监听器与 DOM。
+list.destroy();
+```
